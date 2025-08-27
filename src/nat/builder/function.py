@@ -348,28 +348,18 @@ class LambdaFunction(Function[InputT, StreamingOutputT, SingleOutputT]):
 
 class FunctionGroup:
 
-    def __init__(self,
-                 *,
-                 config: FunctionGroupBaseConfig,
-                 functions: dict[str, tuple[Callable, str]] | None = None,
-                 instance_name: str | None = None):
+    def __init__(self, *, config: FunctionGroupBaseConfig, instance_name: str | None = None):
 
         self._config = config
         self._instance_name = instance_name or config.type
         self._context = Context.get()
         self._functions: dict[str, Function] = {}
 
-        if functions is not None:
-            for name, (fn, description) in functions.items():
-                self.add_function(name, fn, description)
-
-    def add_function(self, name: str, fn: Callable, description: str):
+    def add_function(self, name: str, fn: Callable, **kwargs):
         if name is None:
             raise ValueError("Function name cannot be None")
         if fn is None:
             raise ValueError("Function cannot be None")
-        if description is None:
-            raise ValueError("Function description cannot be None")
         if not name:
             raise ValueError("Function name cannot be empty")
         if any(c.isspace() for c in name):
@@ -377,7 +367,7 @@ class FunctionGroup:
         if name in self._functions:
             raise ValueError(f"Function {name} already exists in function group {self._instance_name}")
 
-        info = FunctionInfo.from_fn(fn, description=description)
+        info = FunctionInfo.from_fn(fn, **kwargs)
         full_name = f"{self._instance_name}.{name}"
         lambda_fn = LambdaFunction.from_info(config=EmptyFunctionConfig(), info=info, instance_name=full_name)
         self._functions[name] = lambda_fn
