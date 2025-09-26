@@ -13,14 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from enum import Enum
+"""AutoGen integration for NeMo Agent Toolkit."""
 
+from .agent_wrapper import AutoGenAgentWrapper
+from .message_adapter import AutoGenMessageAdapter
+from .runtime_wrapper import AutoGenRuntimeManager
 
-class LLMFrameworkEnum(str, Enum):
-    LANGCHAIN = "langchain"
-    LLAMA_INDEX = "llama_index"
-    CREWAI = "crewai"
-    SEMANTIC_KERNEL = "semantic_kernel"
-    AGNO = "agno"
-    ADK = "adk"
-    AUTOGEN = "autogen"
+__all__ = [
+    "AutoGenAgentWrapper",
+    "AutoGenMessageAdapter",
+    "AutoGenRuntimeManager",
+]
