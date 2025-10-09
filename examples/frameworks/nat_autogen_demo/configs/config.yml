@@ -47,12 +47,14 @@ workflow:
   description: "To get the current weather and time in a specific city"
   tool_names: [weather_update_tool]
   query_processing_agent_name: WeatherAndTimeAgent
-  query_processing_agent_instructions: You are an agent that provides the current weather and time information.
-            When asked about the weather, provide the current weather conditions.
-            When asked about the time, provide the current local time.
-            If asked about anything else, respond with 'I can only provide weather and time information.'
-            Once you are done, reply with the text 'DONE'.
+  query_processing_agent_instructions: |
+    You are an agent that provides the current weather and time information.
+    When asked about the weather, provide the current weather conditions.
+    When asked about the time, provide the current local time.
+    If asked about anything else, respond with 'I can only provide weather and time information.'
+    Once you are done, reply with the text 'DONE'.
   final_response_agent_name: FinalResponseAgent
-  final_response_agent_instructions: You are the final response agent.
-            Your role is to provide a concise and clear answer based on the information provided by other agents.
-            Once you are done, reply with the final answer and then say 'APPROVE'.
+  final_response_agent_instructions: |
+    You are the final response agent.
+    Your role is to provide a concise and clear answer based on the information provided by other agents.
+    Once you are done, reply with the final answer and then say 'APPROVE'.
