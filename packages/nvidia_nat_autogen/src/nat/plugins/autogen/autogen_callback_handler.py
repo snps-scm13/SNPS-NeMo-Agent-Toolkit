@@ -151,7 +151,7 @@ class AutoGenProfilerHandler(BaseProfilerCallback):
                     else:
                         model_input += content or ""
             except Exception as _e:
-                logger.exception("Error getting model input: %s", _e)
+                logger.exception("Error getting model input")
 
             # Record the start event
             input_stats = IntermediateStepPayload(
@@ -303,7 +303,7 @@ class AutoGenProfilerHandler(BaseProfilerCallback):
             try:
                 tool_name = str(getattr(args[0], "name", "unknown_tool"))
             except Exception as _e:
-                logger.exception("Error getting tool name: %s", _e)
+                logger.exception("Error getting tool name")
 
             # Record the start event
             input_stats = IntermediateStepPayload(
