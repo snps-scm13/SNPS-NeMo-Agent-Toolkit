@@ -23,7 +23,7 @@ from nat.cli.register_workflow import register_function
 from nat.data_models.function import FunctionBaseConfig
 
 
-class WeatherToolConfig(FunctionBaseConfig, name="weather_update"):
+class WeatherToolConfig(FunctionBaseConfig, name="weather_update_autogen"):
     """Configuration for the weather update tool."""
 
 

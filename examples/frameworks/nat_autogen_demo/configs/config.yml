@@ -38,7 +38,7 @@ llms:
 
 functions:
   weather_update_tool:
-    _type: weather_update
+    _type: nat_autogen_demo/weather_update_autogen
     description: "Get the current weather for a specified city"
 
 workflow:
