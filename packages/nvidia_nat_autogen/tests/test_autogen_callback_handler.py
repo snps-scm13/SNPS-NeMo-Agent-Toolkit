@@ -323,11 +323,11 @@ class TestLLMCallMonkeyPatch:
         kwargs = {"messages": [{"content": "test"}]}
 
         # Call wrapped function
-        result = await wrapped_func(*mock_args, **kwargs)
+        with pytest.raises(Exception):
+            await wrapped_func(*mock_args, **kwargs)
 
         # Verify error handling
-        assert "LLM call failed with error:" in result
-        mock_logger.exception.assert_called()
+        mock_logger.error.assert_called()
 
     @pytest.mark.asyncio
     @patch('nat.plugins.autogen.autogen_callback_handler.Context.get')
@@ -489,11 +489,12 @@ class TestToolCallMonkeyPatch:
         mock_call_data = {"kwargs": {"param": "value"}}
 
         # Call wrapped function
-        result = await wrapped_func(mock_tool, mock_call_data)
+        with pytest.raises(Exception) as exc_info:
+            await wrapped_func(mock_tool, mock_call_data)
 
         # Verify error handling
-        assert "Tool execution failed with error:" in result
-        mock_logger.exception.assert_called()
+        assert "Tool error" in str(exc_info.value)
+        mock_logger.error.assert_called()
 
     @pytest.mark.asyncio
     @patch('nat.plugins.autogen.autogen_callback_handler.Context.get')
@@ -571,7 +572,7 @@ class TestErrorHandlingPaths:
         await wrapped_func(*mock_args, **kwargs)
 
         # Verify error was logged
-        mock_logger.exception.assert_called()
+        mock_logger.error.assert_called()
 
     @pytest.mark.asyncio
     @patch('nat.plugins.autogen.autogen_callback_handler.Context.get')
@@ -600,11 +601,13 @@ class TestErrorHandlingPaths:
         problematic_input = Mock()
         type(problematic_input).kwargs = PropertyMock(side_effect=Exception("Input error"))
 
-        # Call wrapped function
-        await wrapped_func(mock_tool, problematic_input)
+        # Call wrapped function and expect exception
+        with pytest.raises(Exception) as exc_info:
+            await wrapped_func(mock_tool, problematic_input)
 
-        # Verify error was logged
-        mock_logger.exception.assert_called()
+        # Verify error was logged and exception message is correct
+        mock_logger.error.assert_called()
+        assert "Input error" in str(exc_info.value)
 
 
 if __name__ == "__main__":

@@ -37,6 +37,10 @@ class AutoGenFunctionConfig(FunctionBaseConfig, name="autogen_team"):
         default="http://0.0.0.0:9901/mcp",
         description="URL for the MCP time server.",
     )
+    query_processing_agent_name: str = Field(description="Name of the query processing agent")
+    query_processing_agent_instructions: str = Field(description="Instructions for the query processing agent")
+    final_response_agent_name: str = Field(description="Name of the final response agent")
+    final_response_agent_instructions: str = Field(description="Instructions for the final response agent")
 
 
 @register_function(config_type=AutoGenFunctionConfig, framework_wrappers=[LLMFrameworkEnum.AUTOGEN])
@@ -71,23 +75,15 @@ async def autogen_team(config: AutoGenFunctionConfig, builder: Builder) -> Async
         adapter = await StreamableHttpMcpToolAdapter.from_server_params(time_server_params, "current_datetime")
         tools.append(adapter)
 
-        weather_time_agent = AssistantAgent(
-            name="WeatherAndTimeAgent",
-            model_client=llm_client,
-            tools=tools,
-            system_message="You are an agent that provides the current weather and time information. "
-            "When asked about the weather, provide the current weather conditions. "
-            "When asked about the time, provide the current local time. "
-            "If asked about anything else, respond with 'I can only provide weather and time information.' "
-            "Once you are done, reply with the text 'DONE'.")
-        final_response_agent = AssistantAgent(
-            name="FinalResponseAgent",
-            model_client=llm_client,
-            system_message="You are the final response agent. Your role is to provide a concise and clear answer "
-            "based on the information provided by other agents. "
-            "Once you are done, reply with the final answer and then say 'APPROVE'.")
+        query_processing_agent = AssistantAgent(name=config.query_processing_agent_name,
+                                                model_client=llm_client,
+                                                tools=tools,
+                                                system_message=config.query_processing_agent_instructions)
+        final_response_agent = AssistantAgent(name=config.final_response_agent_name,
+                                              model_client=llm_client,
+                                              system_message=config.final_response_agent_instructions)
 
-        team = RoundRobinGroupChat(participants=[weather_time_agent, final_response_agent],
+        team = RoundRobinGroupChat(participants=[query_processing_agent, final_response_agent],
                                    termination_condition=TextMentionTermination("APPROVE"))
 
         async def _autogen_team_workflow(user_input: str) -> str:

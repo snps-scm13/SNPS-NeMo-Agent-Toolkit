@@ -69,7 +69,6 @@ nat run --config_file examples/frameworks/nat_autogen_demo/configs/config.yml --
 ### Expected output
 
 ```console
-[12:44] BASH_$
 2025-10-07 14:34:28,122 - nat.cli.commands.start - INFO - Starting NAT from config file: 'examples/frameworks/nat_autogen_demo/configs/config.yml'
 2025-10-07 14:34:30,285 - mcp.client.streamable_http - INFO - Received session ID: 652a05b6646c4ddb945cf2adf0b3ec18
 Received session ID: 652a05b6646c4ddb945cf2adf0b3ec18

@@ -156,7 +156,7 @@ async def azure_openai_autogen(llm_config: AzureOpenAIModelConfig,
     """
     from autogen_core.models import ModelFamily
     from autogen_core.models import ModelInfo
-    from autogen_ext.models.openai import OpenAIChatCompletionClient
+    from autogen_ext.models.openai import AzureOpenAIChatCompletionClient
 
     config_obj = {
         "api_key":
@@ -181,7 +181,7 @@ async def azure_openai_autogen(llm_config: AzureOpenAIModelConfig,
 
     config_obj.update({"model_info": model_info})
 
-    client = OpenAIChatCompletionClient(
+    client = AzureOpenAIChatCompletionClient(
         model=llm_config.azure_deployment,  # Use deployment name for Azure
         **config_obj)
 
