@@ -271,7 +271,7 @@ class TestLLMClientFunctions:
             """
             if 'autogen_ext.models.openai' in name:
                 mock_module = Mock()
-                mock_module.OpenAIChatCompletionClient = Mock(return_value=mock_client)
+                mock_module.AzureOpenAIChatCompletionClient = Mock(return_value=mock_client)
                 return mock_module
             elif 'autogen_core.models' in name:
                 mock_module = Mock()
@@ -287,7 +287,7 @@ class TestLLMClientFunctions:
                                         api_version="2024-02-01")
         mock_builder = Mock()
 
-        # Test the async context manager
+        # Test the async generator
         gen = azure_openai_autogen(config, mock_builder)
         client = await gen.__anext__()
 
@@ -329,10 +329,11 @@ class TestLLMClientFunctions:
         config = NIMModelConfig(base_url="https://nim.api.nvidia.com/v1", api_key="test-key", model_name="test-model")
         mock_builder = Mock()
 
-        # Test the async context manager
-        async with nim_autogen(config, mock_builder) as client:
-            # Just verify we got a client back without errors
-            assert client is not None
+        # Test the async generator
+        gen = nim_autogen(config, mock_builder)
+        client = await gen.__anext__()
+
+        assert client is not None
 
 
 class TestAutoGenThinkingInjector:

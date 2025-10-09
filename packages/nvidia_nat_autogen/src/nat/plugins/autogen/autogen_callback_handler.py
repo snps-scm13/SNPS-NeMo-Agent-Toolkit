@@ -46,10 +46,6 @@ class AutoGenProfilerHandler(BaseProfilerCallback):
     def __init__(self) -> None:
         """
         Initializes the AutogenProfilerHandler.
-
-        Args:
-            context (Context): The context object containing configuration and state information.
-            **kwargs: Additional keyword arguments.
         """
         super().__init__()
         self._lock = threading.Lock()
@@ -138,7 +134,7 @@ class AutoGenProfilerHandler(BaseProfilerCallback):
             try:
                 model_name = getattr(args[0], "_raw_config", {}).get("model", None)
             except Exception as _e:
-                logger.exception("Error retrieving model name from args[0]._raw_config")
+                logger.error("Error retrieving model name from args[0]._raw_config")
             if not model_name:
                 model_name = str(getattr(args[0], "model", "unknown_model"))
 
@@ -155,7 +151,7 @@ class AutoGenProfilerHandler(BaseProfilerCallback):
                     else:
                         model_input += content or ""
             except Exception as _e:
-                logger.exception("Error getting model input")
+                logger.error("Error getting model input: %s", _e)
 
             # Record the start event
             input_stats = IntermediateStepPayload(
@@ -180,8 +176,21 @@ class AutoGenProfilerHandler(BaseProfilerCallback):
             try:
                 output = await original_func(*args, **kwargs)
             except Exception as _e:
-                output = f"LLM call failed with error: {str(_e)}"
-                logger.exception("Error during LLM call")
+                logger.error("Error during LLM call: %s", _e)
+                self.step_manager.push_intermediate_step(
+                    IntermediateStepPayload(
+                        event_type=IntermediateStepType.LLM_END,
+                        span_event_timestamp=time.time(),
+                        framework=LLMFrameworkEnum.AUTOGEN,
+                        name=model_name,
+                        data=StreamEventData(input=model_input, output=str(_e)),
+                        metadata=TraceMetadata(error=str(_e)),
+                        usage_info=UsageInfo(token_usage=TokenUsageBaseModel()),
+                        UUID=llm_start_uuid,
+                    ))
+                with self._lock:
+                    self.last_call_ts = time.time()
+                raise
 
             model_output = ""
             try:
@@ -189,7 +198,21 @@ class AutoGenProfilerHandler(BaseProfilerCallback):
                     msg = str(content)
                     model_output += msg or ""
             except Exception as _e:
-                logger.exception("Error getting model output")
+                logger.error("Error getting model output")
+                self.step_manager.push_intermediate_step(
+                    IntermediateStepPayload(
+                        event_type=IntermediateStepType.LLM_END,
+                        span_event_timestamp=time.time(),
+                        framework=LLMFrameworkEnum.AUTOGEN,
+                        name=model_name,
+                        data=StreamEventData(input=model_input, output=str(_e)),
+                        metadata=TraceMetadata(error=str(_e)),
+                        usage_info=UsageInfo(token_usage=TokenUsageBaseModel()),
+                        UUID=llm_start_uuid,
+                    ))
+                with self._lock:
+                    self.last_call_ts = time.time()
+                raise
 
             now = time.time()
             # Record the end event
@@ -201,7 +224,21 @@ class AutoGenProfilerHandler(BaseProfilerCallback):
                     chat_resp = first_choice.model_dump() if hasattr(
                         first_choice, "model_dump") else getattr(first_choice, "__dict__", {}) or {}
             except Exception as _e:
-                logger.exception("Error preparing chat_responses")
+                logger.error("Error preparing chat_responses")
+                self.step_manager.push_intermediate_step(
+                    IntermediateStepPayload(
+                        event_type=IntermediateStepType.LLM_END,
+                        span_event_timestamp=time.time(),
+                        framework=LLMFrameworkEnum.AUTOGEN,
+                        name=model_name,
+                        data=StreamEventData(input=model_input, output=str(_e)),
+                        metadata=TraceMetadata(error=str(_e)),
+                        usage_info=UsageInfo(token_usage=TokenUsageBaseModel()),
+                        UUID=llm_start_uuid,
+                    ))
+                with self._lock:
+                    self.last_call_ts = time.time()
+                raise
 
             usage_payload: dict[str, Any] = {}
             try:
@@ -266,22 +303,14 @@ class AutoGenProfilerHandler(BaseProfilerCallback):
             try:
                 tool_name = str(getattr(args[0], "name", "unknown_tool"))
             except Exception as _e:
-                logger.exception("Error retrieving tool name")
-
-            tool_input = ""
-            try:
-                tool_input = str(args[1].kwargs)
-            except (IndexError, AttributeError):
-                tool_input = str(args[1].get('kwargs', {}))
-            except Exception as _e:
-                logger.exception("Error getting tool input")
+                logger.error("Error getting tool name: %s", _e)
 
             # Record the start event
             input_stats = IntermediateStepPayload(
                 event_type=IntermediateStepType.TOOL_START,
                 framework=LLMFrameworkEnum.AUTOGEN,
                 name=tool_name,
-                data=StreamEventData(input=tool_input),
+                data=StreamEventData(input={}),
                 usage_info=UsageInfo(
                     token_usage=TokenUsageBaseModel(),
                     num_llm_calls=0,
@@ -293,13 +322,47 @@ class AutoGenProfilerHandler(BaseProfilerCallback):
 
             self.step_manager.push_intermediate_step(input_stats)
 
+            tool_input = ""
+            try:
+                tool_input = str(args[1].kwargs)
+            except (IndexError, AttributeError):
+                tool_input = str(args[1].get('kwargs', {}))
+            except Exception as _e:
+                logger.error("Error getting tool input: %s", _e)
+                self.step_manager.push_intermediate_step(
+                    IntermediateStepPayload(
+                        event_type=IntermediateStepType.TOOL_END,
+                        span_event_timestamp=time.time(),
+                        framework=LLMFrameworkEnum.AUTOGEN,
+                        name=tool_name,
+                        data=StreamEventData(input=tool_input, output=str(_e)),
+                        metadata=TraceMetadata(error=str(_e)),
+                        usage_info=UsageInfo(token_usage=TokenUsageBaseModel()),
+                        UUID=tool_start_uuid,
+                    ))
+                with self._lock:
+                    self.last_call_ts = time.time()
+                raise
+
             try:
                 # Call the original BaseTool.run_json(...)
                 # output = await original_func(*args, **kwargs)
                 output = await original_func(*args, **kwargs)
             except Exception as _e:
-                output = f"Tool execution failed with error: {str(_e)}"
-                logger.error("Error during tool execution")
+                logger.error("Tool execution failed with error: %s", _e)
+                self.step_manager.push_intermediate_step(
+                    IntermediateStepPayload(
+                        event_type=IntermediateStepType.TOOL_END,
+                        span_event_timestamp=time.time(),
+                        framework=LLMFrameworkEnum.AUTOGEN,
+                        name=tool_name,
+                        data=StreamEventData(input=tool_input, output=str(_e)),
+                        metadata=TraceMetadata(error=str(_e)),
+                        usage_info=UsageInfo(token_usage=TokenUsageBaseModel()),
+                        UUID=tool_start_uuid,
+                    ))
+                with self._lock:
+                    self.last_call_ts = time.time()
                 raise
 
             tool_output = output

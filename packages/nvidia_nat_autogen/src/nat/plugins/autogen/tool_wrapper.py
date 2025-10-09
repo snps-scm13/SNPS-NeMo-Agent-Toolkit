@@ -15,15 +15,12 @@
 """Tool wrapper for AutoGen integration with NAT."""
 
 import logging
-import types
 from collections.abc import AsyncIterator
 from collections.abc import Callable
 from dataclasses import is_dataclass
 
 # PythonType not available in AutoGen 0.7.4, using Any instead
 from typing import Any
-from typing import get_args
-from typing import get_origin
 
 from autogen_core.tools import FunctionTool
 from pydantic.dataclasses import dataclass as pydantic_dataclass
@@ -32,6 +29,7 @@ from nat.builder.builder import Builder
 from nat.builder.framework_enum import LLMFrameworkEnum
 from nat.builder.function import Function
 from nat.cli.register_workflow import register_tool_wrapper
+from nat.utils.type_utils import DecomposedType
 
 logger = logging.getLogger(__name__)
 
@@ -46,13 +44,8 @@ def resolve_type(t: Any) -> Any:
     Returns:
         Any: The resolved type.
     """
-    origin = get_origin(t)
-    if origin is types.UnionType:
-        for arg in get_args(t):
-            if arg is not type(None):
-                return arg
-        return t
-    return t
+    resolved = DecomposedType(t)
+    return resolved.type
 
 
 @register_tool_wrapper(wrapper_type=LLMFrameworkEnum.AUTOGEN)

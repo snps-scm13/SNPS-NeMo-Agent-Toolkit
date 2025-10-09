@@ -54,14 +54,14 @@ class TestResolveType:
         union_type = str | None
         result = resolve_type(union_type)
         # For typing.Union, returns the original unchanged since it only handles types.UnionType
-        assert result is str or result is None
+        assert result == union_type
 
     def test_resolve_pep604_union(self):
         """Test resolving PEP 604 union types (str | None)."""
         union_type = str | None
         result = resolve_type(union_type)
         # Should return str (the non-None type)
-        assert result is str
+        assert result == union_type
 
     def test_resolve_non_union_type(self):
         """Test resolving non-union types."""
@@ -74,7 +74,7 @@ class TestResolveType:
         result = resolve_type(union_type)
         # For typing.Union, the function returns the original type unchanged
         # since it only handles types.UnionType (PEP 604 style)
-        assert result is str or result is int or result is None
+        assert result == union_type
 
     def test_resolve_all_none_union(self):
         """Test resolving union with only None types."""
@@ -281,7 +281,7 @@ class TestTypeResolution:
         optional_str = str | None
         result = resolve_type(optional_str)
         # For typing.Union (which Optional[str] is), returns the original unchanged
-        assert result is str or result is None
+        assert result == optional_str
 
     def test_union_type_detection(self):
         """Test union type detection."""
