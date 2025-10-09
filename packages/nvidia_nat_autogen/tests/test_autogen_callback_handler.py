@@ -571,8 +571,8 @@ class TestErrorHandlingPaths:
         # Call wrapped function
         await wrapped_func(*mock_args, **kwargs)
 
-        # Verify error was logged
-        mock_logger.error.assert_called()
+        # Verify exception was logged
+        mock_logger.exception.assert_called()
 
     @pytest.mark.asyncio
     @patch('nat.plugins.autogen.autogen_callback_handler.Context.get')

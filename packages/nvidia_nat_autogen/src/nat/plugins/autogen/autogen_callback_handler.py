@@ -134,7 +134,7 @@ class AutoGenProfilerHandler(BaseProfilerCallback):
             try:
                 model_name = getattr(args[0], "_raw_config", {}).get("model", None)
             except Exception as _e:
-                logger.error("Error retrieving model name from args[0]._raw_config")
+                logger.exception("Error retrieving model name from args[0]._raw_config")
             if not model_name:
                 model_name = str(getattr(args[0], "model", "unknown_model"))
 
@@ -151,7 +151,7 @@ class AutoGenProfilerHandler(BaseProfilerCallback):
                     else:
                         model_input += content or ""
             except Exception as _e:
-                logger.error("Error getting model input: %s", _e)
+                logger.exception("Error getting model input: %s", _e)
 
             # Record the start event
             input_stats = IntermediateStepPayload(
@@ -303,7 +303,7 @@ class AutoGenProfilerHandler(BaseProfilerCallback):
             try:
                 tool_name = str(getattr(args[0], "name", "unknown_tool"))
             except Exception as _e:
-                logger.error("Error getting tool name: %s", _e)
+                logger.exception("Error getting tool name: %s", _e)
 
             # Record the start event
             input_stats = IntermediateStepPayload(
