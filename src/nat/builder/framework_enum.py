@@ -24,3 +24,4 @@ class LLMFrameworkEnum(str, Enum):
     AGNO = "agno"
     ADK = "adk"
     AUTOGEN = "autogen"
+    STRANDS = "strands"
