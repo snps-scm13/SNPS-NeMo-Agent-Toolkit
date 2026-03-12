@@ -498,6 +498,12 @@ class SessionManager:
                                              conversation_id,
                                              pre_parsed_cookies=cookies_dict)
 
+        if conversation_id is not None and not self._context_state.conversation_id.get():
+            self._context_state.conversation_id.set(conversation_id)
+
+        if user_message_id is not None and not self._context_state.user_message_id.get():
+            self._context_state.user_message_id.set(user_message_id)
+
         token_workflow_parent_id = None
         token_workflow_parent_name = None
         if isinstance(http_connection, Request):
